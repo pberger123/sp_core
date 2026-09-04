@@ -10,6 +10,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'sp_core.dart';
 
@@ -17,7 +18,7 @@ import 'sp_core.dart';
 // VERSION - bump this each time new code is handed off.
 // Continues the same v2.x series established when this project started.
 // ══════════════════════════════════════════════════════
-const String kVersion = 'v2.3';
+const String kVersion = 'v2.4';
 
 const int kMaxLogLines = 500; // cap on-screen log growth, same spirit as the deque buffers in Python
 
@@ -55,6 +56,7 @@ class _SteadyPointHomePageState extends State<SteadyPointHomePage> {
 
   SensorConnectionState _connectionState = SensorConnectionState.disconnected;
   String _status = 'Not connected';
+  PackageInfo? _packageInfo; // real version+build number, read from pubspec.yaml at build time
 
   late final StreamSubscription<String> _statusSub;
   late final StreamSubscription<SensorConnectionState> _connSub;
@@ -67,6 +69,9 @@ class _SteadyPointHomePageState extends State<SteadyPointHomePage> {
     _connSub = widget.session.connectionState
         .listen((s) => setState(() => _connectionState = s));
     _logSub = widget.session.log.listen(_appendLog);
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _packageInfo = info);
+    });
   }
 
   void _appendLog(String line) {
@@ -99,10 +104,23 @@ class _SteadyPointHomePageState extends State<SteadyPointHomePage> {
       _connectionState == SensorConnectionState.streaming;
   bool get _isStreaming => _connectionState == SensorConnectionState.streaming;
 
+  String _titleText() {
+    // kVersion is the dev-facing iteration tag we bump by hand on every
+    // code change (see the versioning convention in this file's header).
+    // PackageInfo reads the REAL version+build number Flutter baked in
+    // from pubspec.yaml at build time - showing both together makes it
+    // obvious if the two ever drift out of sync with each other.
+    final info = _packageInfo;
+    if (info == null) {
+      return 'sp_core  •  $kVersion'; // package info not loaded yet
+    }
+    return 'sp_core  •  $kVersion  (${info.version}+${info.buildNumber})';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('sp_core  •  $kVersion')),
+      appBar: AppBar(title: Text(_titleText())),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(

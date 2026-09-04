@@ -15,6 +15,7 @@ cd sp_core
 ```bash
 flutter pub add flutter_blue_plus
 flutter pub add permission_handler
+flutter pub add package_info_plus
 ```
 
 (Not giving pinned version numbers directly - I can't reach pub.dev from my

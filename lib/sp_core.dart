@@ -1,10 +1,14 @@
-// sp_core - public API barrel file.
+// sp_core - public API barrel file. (v2.5 - now a pure package, no UI/platform code)
 //
-// Consuming apps (this reference app, and any other team's UI wrapper)
+// Consuming apps (sp_core_reference_app, and any other team's UI wrapper)
 // should import ONLY this file, not anything under lib/src/ directly.
 // Internals under lib/src/ may be refactored between versions without
 // notice - this barrel is the stable contract other projects depend on
 // when pulling sp_core as a git dependency.
+//
+// This package deliberately has no main.dart, no chart-rendering widgets,
+// and no platform folders (android/, ios/, etc.) - see SETUP.md for where
+// those live now (sp_core_reference_app, a separate repo).
 library sp_core;
 
 export 'src/sensors/sensor_source.dart';

@@ -1,0 +1,20 @@
+# SteadyPoint configuration (Dart/Flutter side)
+# Matches the format and values of the Python reference's config.toml.
+#
+# sp_core doesn't load this file itself - see SpCoreConfig.fromToml() and
+# each consuming app's own docs for how the TOML text actually gets read
+# on that platform (e.g. sp_core_reference_app reads a local file on
+# desktop; mobile apps may need a different approach).
+
+[frequency]
+# Expected low/high end of tremor/movement frequency (Hz), used when
+# picking the dominant frequency and mapping it to an audible tone.
+min_hz = 0.5
+max_hz = 20.0
+
+[intensity]
+# AC-RMS (g) at or below this value reads as intensity level 0 (stillness).
+noise_floor_g = 0.006
+
+# AC-RMS (g) at or above this value reads as intensity level 100.
+full_scale_g = 3.0

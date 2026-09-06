@@ -1,4 +1,4 @@
-# sp_core - Setup (v2.5)
+# sp_core - Setup (v2.6)
 
 sp_core is a pure Dart/Flutter **package** - sensor data collection,
 metrics computation, and sonification output. It has NO UI and NO
@@ -7,6 +7,19 @@ to consuming apps, not to this package.
 
 The runnable reference app that demonstrates how to use this package
 lives in a separate repo: **sp_core_reference_app**.
+
+## New in v2.6: dominant frequency + real config
+
+```bash
+flutter pub add fftea
+flutter pub add toml
+```
+
+`config.toml` (in this repo's root) is a reference file showing the
+expected format - sp_core doesn't load it automatically (see
+`config/config.dart`'s header comment for why); consuming apps decide how
+to source the TOML text for their platform.
+
 
 ## If you're converting THIS existing repo from the old combined structure
 
@@ -34,11 +47,13 @@ lib/
     sensors/
       sensor_source.dart          <- abstract interface + AccelSample model
       m5stick_sensor.dart         <- current BLE implementation
-    metrics/                      <- NOT YET IMPLEMENTED (dominant freq, intensity)
+    metrics/
+      dominant_frequency.dart     <- FFT-based, per-axis + average, EMA smoothed
+      intensity.dart               <- NOT YET IMPLEMENTED (AC-RMS scoring)
     config/
-      config.dart                 <- tunable thresholds (defaults only so far)
+      config.dart                 <- real TOML parsing (SpCoreConfig.fromToml)
     session/
-      steadypoint_session.dart    <- orchestration: owns the rolling buffer
+      steadypoint_session.dart    <- orchestration: buffer + frequency estimator
     visualization/
       chart_state.dart            <- data prep ONLY, no widgets, no chart rendering
     sonification/
@@ -46,6 +61,7 @@ lib/
       sonification_player.dart    <- NOT YET IMPLEMENTED (actual audio engine)
 test/
   session/                        <- unit tests using a fake sensor, no hardware needed
+  metrics/                        <- unit tests using synthetic sine wave input
 ```
 
 Note what's deliberately absent: no `charts.dart`, no chart-rendering

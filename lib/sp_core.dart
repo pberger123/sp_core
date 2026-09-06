@@ -1,4 +1,4 @@
-// sp_core - public API barrel file. (v2.5 - now a pure package, no UI/platform code)
+// sp_core - public API barrel file. (v2.6 - dominant frequency + real config)
 //
 // Consuming apps (sp_core_reference_app, and any other team's UI wrapper)
 // should import ONLY this file, not anything under lib/src/ directly.
@@ -15,7 +15,9 @@ export 'src/sensors/sensor_source.dart';
 export 'src/sensors/m5stick_sensor.dart';
 export 'src/config/config.dart';
 export 'src/session/steadypoint_session.dart';
+export 'src/metrics/dominant_frequency.dart';
 
-// Metrics, visualization, and sonification exports will be added here as
-// each is implemented in future increments (see lib/src/metrics/,
-// lib/src/visualization/, lib/src/sonification/ for their current status).
+// Intensity, visualization data prep, and sonification exports will be
+// added here as each is implemented in future increments (see
+// lib/src/metrics/, lib/src/visualization/, lib/src/sonification/ for
+// their current status).

@@ -1,16 +1,17 @@
 // sp_core - session/steadypoint_session.dart
 //
 // Orchestrates a SensorSource: owns the rolling sample buffer (same role
-// as the `data` deque in sp_stdout.py) and, in future increments, feeds
-// metrics computations (dominant frequency, intensity). This is the layer
-// other apps' UIs should build on top of, rather than talking to a
-// SensorSource directly - it's where cross-cutting session state lives,
-// independent of any UI framework or specific sensor implementation.
+// as the `data` deque in sp_stdout.py) and feeds metrics computations
+// (dominant frequency; intensity to follow). This is the layer other
+// apps' UIs should build on top of, rather than talking to a SensorSource
+// directly - it's where cross-cutting session state lives, independent of
+// any UI framework or specific sensor implementation.
 
 import 'dart:async';
 import 'dart:collection';
 
 import '../config/config.dart';
+import '../metrics/dominant_frequency.dart';
 import '../sensors/sensor_source.dart';
 
 class SteadyPointSession {
@@ -20,7 +21,10 @@ class SteadyPointSession {
 
   final Queue<AccelSample> _buffer = Queue<AccelSample>();
   final _bufferController = StreamController<List<AccelSample>>.broadcast();
+  final _frequencyController =
+      StreamController<DominantFrequencyResult>.broadcast();
 
+  late final DominantFrequencyEstimator _frequencyEstimator;
   StreamSubscription<AccelSample>? _sampleSub;
 
   SteadyPointSession({
@@ -28,6 +32,10 @@ class SteadyPointSession {
     this.config = const SpCoreConfig(),
     this.windowDuration = const Duration(seconds: 5),
   }) {
+    _frequencyEstimator = DominantFrequencyEstimator(
+      config: config,
+      windowDuration: windowDuration,
+    );
     _sampleSub = sensor.samples.listen(_onSample);
   }
 
@@ -39,12 +47,14 @@ class SteadyPointSession {
   Stream<String> get log => sensor.log;
 
   /// Rolling buffer of samples within [windowDuration], most recent last.
-  /// Future metrics implementations (dominant frequency, intensity) will
-  /// read from this stream rather than duplicating buffer management.
   Stream<List<AccelSample>> get bufferSnapshots => _bufferController.stream;
 
   /// Current buffer contents as of the last received sample.
   List<AccelSample> get currentBuffer => List.unmodifiable(_buffer);
+
+  /// Dominant frequency per axis + average, updated on every new sample.
+  Stream<DominantFrequencyResult> get frequencies =>
+      _frequencyController.stream;
 
   void _onSample(AccelSample sample) {
     _buffer.addLast(sample);
@@ -53,6 +63,9 @@ class SteadyPointSession {
       _buffer.removeFirst();
     }
     _bufferController.add(List.unmodifiable(_buffer));
+
+    final freqResult = _frequencyEstimator.addSample(sample);
+    _frequencyController.add(freqResult);
   }
 
   Future<void> connect() => sensor.connect();
@@ -62,6 +75,7 @@ class SteadyPointSession {
   void dispose() {
     _sampleSub?.cancel();
     _bufferController.close();
+    _frequencyController.close();
     sensor.dispose();
   }
 }
